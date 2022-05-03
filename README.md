@@ -14,6 +14,10 @@ Advantages over classic implementations
 * Remote mode. See notes
 * Cross-platform
 
+Installation
+------------
+* via Cargo: Run `cargo install printenv2` if you already have Rust development environment setup.
+
 Notes on remote mode
 --------------------
 
