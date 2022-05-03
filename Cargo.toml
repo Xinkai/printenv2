@@ -1,0 +1,24 @@
+[package]
+name = "printenv2"
+version = "0.0.1"
+edition = "2021"
+authors = [
+    "Xinkai Chen <xinkai.chen@qq.com>",
+]
+description = "A printenv rewrite in Rust"
+readme = "README.md"
+categories = ["command-line-utilities"]
+repository = "https://github.com/Xinkai/printenv2/"
+license = "MIT"
+keywords = ["environment variables"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+colored = { version = "2" }
+clap = { version = "3.1.12", features = ["derive"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+panic = "abort"

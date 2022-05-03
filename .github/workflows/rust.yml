@@ -1,0 +1,27 @@
+name: Rust
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on:  ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v3
+    - name: Check
+      run: |
+        cargo clippy --all-targets --all-features -- --deny warnings --deny clippy::all --deny clippy::pedantic --deny clippy::nursery --deny clippy::cargo
+        cargo fmt --check
+    - name: Build
+      run: cargo build --verbose
+    - name: Run tests
+      run: cargo test --verbose
