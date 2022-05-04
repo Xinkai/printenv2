@@ -2,6 +2,7 @@
 
 // Ideas taken from https://stackoverflow.com/questions/1202653/check-for-environment-variable-in-another-process#answer-63222041
 
+use super::definition::AppResult;
 use std::ffi::c_void;
 use windows::Win32::Foundation::UNICODE_STRING;
 use windows::Win32::Security::{TOKEN_ADJUST_PRIVILEGES, TOKEN_PRIVILEGES, TOKEN_QUERY};
@@ -228,7 +229,7 @@ mod oxidation {
     }
 }
 
-pub fn print_environment_string(pid: u32) -> ::windows::core::Result<()> {
+pub fn print_environment_string(pid: u32) -> AppResult<()> {
     let current_process = oxidation::get_current_process();
 
     let token_handle =
@@ -292,10 +293,10 @@ pub fn print_environment_string(pid: u32) -> ::windows::core::Result<()> {
         out
     };
 
-    // Make sure these handles are passed with their clones.
+    // Prevent pre-maturely dropping these handles by passing non-clones to functions.
     drop(token_handle);
     drop(process_handle);
 
-    println!("{}", String::from_utf16(&environment).unwrap());
+    println!("{}", String::from_utf16(&environment)?);
     Ok(())
 }
