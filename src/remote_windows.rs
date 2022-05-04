@@ -283,7 +283,7 @@ pub fn print_environment_string(pid: u32) -> AppResult<()> {
         out
     };
 
-    let cap = (user_process_parameters.EnvironmentSize / 2 + 1) as usize;
+    let cap = (user_process_parameters.EnvironmentSize / 2) as usize;
 
     let environment = {
         let mut out = vec![0u16; cap];
