@@ -5,7 +5,9 @@
 use super::definition::AppResult;
 use std::ffi::c_void;
 use windows::Win32::Foundation::UNICODE_STRING;
-use windows::Win32::Security::{TOKEN_ADJUST_PRIVILEGES, TOKEN_PRIVILEGES, TOKEN_QUERY};
+use windows::Win32::Security::{
+    LUID_AND_ATTRIBUTES, TOKEN_ADJUST_PRIVILEGES, TOKEN_PRIVILEGES, TOKEN_QUERY,
+};
 use windows::Win32::System::Kernel::STRING;
 use windows::Win32::System::SystemServices::SE_DEBUG_NAME;
 use windows::Win32::System::Threading::{
@@ -236,11 +238,13 @@ pub fn print_environment_string(pid: u32) -> AppResult<()> {
         oxidation::open_process_token(current_process, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY)?;
     let luid = oxidation::lookup_privilege_value(SE_DEBUG_NAME)?;
 
-    let mut token_privileges = TOKEN_PRIVILEGES {
+    let token_privileges = TOKEN_PRIVILEGES {
         PrivilegeCount: 1,
-        ..TOKEN_PRIVILEGES::default()
+        Privileges: [LUID_AND_ATTRIBUTES {
+            Luid: luid,
+            ..LUID_AND_ATTRIBUTES::default()
+        }; 1],
     };
-    token_privileges.Privileges[0].Luid = luid;
     oxidation::adjust_token_privileges(token_handle.clone(), false, token_privileges)?;
 
     let process_handle =
