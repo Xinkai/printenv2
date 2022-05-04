@@ -29,6 +29,7 @@ pub fn os_string_to_u8_vec(os_string: &OsString) -> Vec<u8> {
 }
 
 #[cfg(target_family = "windows")]
+#[allow(clippy::unnecessary_wraps)]
 pub fn u8_vec_to_string(bytes: &[u8]) -> Utf8DecodeResult {
     // On Windows, OsString must be valid Unicode
     Ok(std::str::from_utf8(bytes).unwrap().into())
