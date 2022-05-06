@@ -14,6 +14,10 @@ mod definition;
 mod env;
 mod platform_ext;
 mod printer;
+#[cfg(target_family = "unix")]
+mod remote_unix;
+#[cfg(target_family = "windows")]
+mod remote_windows;
 
 use args::Commands;
 use definition::AppResult;
@@ -24,33 +28,16 @@ fn main() -> AppResult<()> {
     let args = args::parse();
 
     match args.command {
-        Some(Commands::RemoteEnvStringDump {}) => {
-            println!(
-                r##"#!/bin/sh
+        Some(Commands::RemoteEnvStringDump { pid }) => {
+            #[cfg(target_family = "unix")]
+            {
+                remote_unix::print_gdb_helper(pid);
+            };
 
-set -eu
-
-OUTPUT=$(mktemp --quiet)
-
-cat << EOF | gdb --pid=$1
-set pagination off
-set variable \$env = (char**) __environ
-set variable \$i=0
-while (\$env[\$i] != 0)
-  set variable \$pos=0
-  set variable \$char=1
-  while (\$char != 0)
-    set variable \$char=\$env[\$i][\$pos++]
-    append binary value $OUTPUT \$char
-  end
-  set \$i = \$i+1
-end
-EOF
-
-cat "$OUTPUT"
-rm "$OUTPUT"
-"##
-            );
+            #[cfg(target_family = "windows")]
+            {
+                remote_windows::print_environment_string(pid)?;
+            }
 
             Ok(())
         }

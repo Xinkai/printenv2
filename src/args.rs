@@ -23,7 +23,7 @@ pub enum KeyOrder {
 #[derive(Subcommand, Debug)]
 pub enum Commands {
     /// Use a debugger to dump environment variable string from memory of remote process
-    RemoteEnvStringDump {},
+    RemoteEnvStringDump { pid: u32 },
 }
 
 /// Print environment variables
