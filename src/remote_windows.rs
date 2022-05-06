@@ -69,14 +69,14 @@ mod oxidation {
     use std::ffi::c_void;
     use std::ptr::null_mut;
     use std::rc::Rc;
-    use windows::Win32::Foundation::{CloseHandle, HANDLE, LUID};
+    use windows::Win32::Foundation::{CloseHandle, FARPROC, HANDLE, LUID, NTSTATUS};
     use windows::Win32::Security::{
         AdjustTokenPrivileges, LookupPrivilegeValueA, TOKEN_ACCESS_MASK, TOKEN_PRIVILEGES,
     };
     use windows::Win32::System::Diagnostics::Debug::ReadProcessMemory;
+    use windows::Win32::System::LibraryLoader::{GetModuleHandleA, GetProcAddress};
     use windows::Win32::System::Threading::{
-        NtQueryInformationProcess, OpenProcess, PROCESSINFOCLASS, PROCESS_ACCESS_RIGHTS,
-        PROCESS_INFORMATION,
+        OpenProcess, PROCESSINFOCLASS, PROCESS_ACCESS_RIGHTS, PROCESS_INFORMATION,
     };
 
     #[derive(Debug)]
@@ -186,6 +186,42 @@ mod oxidation {
         }
     }
 
+    #[inline]
+    unsafe fn NtQueryInformationProcess_dyn(
+        processhandle: HANDLE,
+        processinformationclass: PROCESSINFOCLASS,
+        processinformation: *mut c_void,
+        processinformationlength: u32,
+        returnlength: *mut u32,
+    ) -> ::windows::core::Result<()> {
+        type NtQueryInformationProcess = extern "system" fn(
+            processhandle: HANDLE,
+            processinformationclass: PROCESSINFOCLASS,
+            processinformation: *mut c_void,
+            processinformationlength: u32,
+            returnlength: *mut u32,
+        ) -> NTSTATUS;
+
+        static mut FARPROC_STATIC: FARPROC = None;
+        if FARPROC_STATIC.is_none() {
+            let ntdll_handle = GetModuleHandleA("ntdll.dll")?;
+            FARPROC_STATIC.replace(
+                GetProcAddress(ntdll_handle, "NtQueryInformationProcess")
+                    .expect("NtQueryInformationProcess unavailable"),
+            );
+        }
+
+        let proc: NtQueryInformationProcess = ::core::mem::transmute(FARPROC_STATIC.unwrap());
+        proc(
+            processhandle,
+            processinformationclass,
+            processinformation,
+            processinformationlength,
+            returnlength,
+        )
+        .ok()
+    }
+
     pub fn nt_query_information_process<T: Into<HANDLE>>(
         process_handle: T,
         process_information_class: PROCESSINFOCLASS,
@@ -195,7 +231,7 @@ mod oxidation {
         let mut return_length = 0;
         #[allow(clippy::cast_possible_truncation)]
         unsafe {
-            NtQueryInformationProcess(
+            NtQueryInformationProcess_dyn(
                 process_handle.into(),
                 process_information_class,
                 process_information.cast::<c_void>(),
