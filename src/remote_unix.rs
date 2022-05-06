@@ -1,5 +1,5 @@
-pub fn print_gdb_helper(pid: u32) {
-    println!(
+pub fn get_gdb_helper(pid: u32) -> String {
+    format!(
         r##"#!/bin/sh
 
 set -eu

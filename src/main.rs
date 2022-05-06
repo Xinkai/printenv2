@@ -30,14 +30,13 @@ fn main() -> AppResult<()> {
     match args.command {
         Some(Commands::RemoteEnvStringDump { pid }) => {
             #[cfg(target_family = "unix")]
-            {
-                remote_unix::print_gdb_helper(pid);
-            };
+            let output = { remote_unix::get_gdb_helper(pid) };
 
             #[cfg(target_family = "windows")]
-            {
-                remote_windows::print_environment_string(pid)?;
-            }
+            let output = { remote_windows::get_environment_string(pid)? };
+
+            colored::control::set_override(false);
+            print!("{}", output);
 
             Ok(())
         }
