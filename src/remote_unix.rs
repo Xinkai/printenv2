@@ -25,5 +25,5 @@ cat "$OUTPUT"
 rm "$OUTPUT"
 "##,
         pid
-    );
+    )
 }
