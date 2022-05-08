@@ -267,7 +267,7 @@ mod oxidation {
     }
 }
 
-pub fn print_environment_string(pid: u32) -> AppResult<()> {
+pub fn get_environment_string(pid: u32) -> AppResult<String> {
     let current_process = oxidation::get_current_process();
 
     let token_handle =
@@ -337,6 +337,5 @@ pub fn print_environment_string(pid: u32) -> AppResult<()> {
     drop(token_handle);
     drop(process_handle);
 
-    println!("{}", String::from_utf16(&environment)?);
-    Ok(())
+    Ok(String::from_utf16(&environment)?)
 }

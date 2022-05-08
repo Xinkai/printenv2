@@ -16,6 +16,8 @@ Advantages over classic implementations
 
 Installation
 ------------
+* via package managers:
+  * Arch Linux: `paru -S printenv2`
 * via Cargo: Run `cargo install printenv2` if you already have Rust development environment setup.
 
 Notes on remote mode

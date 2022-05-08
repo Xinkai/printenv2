@@ -59,8 +59,21 @@ pub struct Args {
 }
 
 pub fn parse() -> Args {
-    let args = Args::parse();
-    if args.null && (args.color.is_some() || args.escape.is_some()) {
+    let mut args = Args::parse();
+
+    if let Some(Commands::RemoteEnvStringDump { .. }) = args.command {
+        args.null = true;
+        if args.color == Some(ColorMode::Auto) {
+            args.color = Some(ColorMode::Never);
+        }
+    }
+
+    if args.color == Some(ColorMode::Never) {
+        colored::control::set_override(false);
+    }
+
+    if args.null && (args.color == Some(ColorMode::Always) || args.escape == Some(EscapeMode::Yes))
+    {
         let mut cmd = Args::command();
         cmd.error(
             ErrorKind::ArgumentConflict,
