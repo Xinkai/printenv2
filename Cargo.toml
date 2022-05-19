@@ -11,6 +11,7 @@ categories = ["command-line-utilities"]
 repository = "https://github.com/Xinkai/printenv2/"
 license = "MIT"
 keywords = ["printenv", "coreutils"]
+build = "build.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -29,6 +30,9 @@ windows = { version = "0.36.1", features = [
     "Win32_System_Diagnostics_Debug",
     "Win32_System_LibraryLoader",
 ] }
+
+[build-dependencies]
+bindgen = { version = "0.59.2" }
 
 [profile.release]
 opt-level = 3

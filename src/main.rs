@@ -14,8 +14,9 @@ mod definition;
 mod env;
 mod platform_ext;
 mod printer;
-#[cfg(target_family = "unix")]
-mod remote_unix;
+mod remote_debugger_helper;
+#[cfg(all(not(target_os = "linux"), target_family = "unix"))]
+mod remote_unix_kvm;
 #[cfg(target_family = "windows")]
 mod remote_windows;
 
@@ -30,7 +31,7 @@ fn main() -> AppResult<()> {
     match args.command {
         Some(Commands::RemoteEnvStringDump { pid }) => {
             #[cfg(target_family = "unix")]
-            let output = { remote_unix::get_gdb_helper(pid) };
+            let output = { remote_debugger_helper::get_gdb_helper(pid) };
 
             #[cfg(target_family = "windows")]
             let output = { remote_windows::get_environment_string(pid)? };

@@ -3,15 +3,17 @@ use crate::platform_ext;
 
 pub type RecordPair = (Vec<u8>, Vec<u8>);
 
+fn parse_record_pair(record: &[u8]) -> Option<RecordPair> {
+    record
+        .iter()
+        .position(|c| b'=' == *c)
+        .map(|i| ((&record[..i]).to_vec(), (&record[i + 1..]).to_vec()))
+}
+
 pub fn parse_env_var_string(raw_bytes: &[u8]) -> Vec<RecordPair> {
     raw_bytes
         .split(|c| *c == 0)
-        .filter_map(|record| -> Option<RecordPair> {
-            record
-                .iter()
-                .position(|c| b'=' == *c)
-                .map(|i| ((&record[..i]).to_vec(), (&record[i + 1..]).to_vec()))
-        })
+        .filter_map(parse_record_pair)
         .collect()
 }
 
