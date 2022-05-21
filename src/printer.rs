@@ -118,7 +118,6 @@ impl<'a> Printer<'a> {
 mod tests {
     use super::Printer;
     use crate::args::ColorMode;
-    use crate::{env, remote_linux_procfs};
 
     #[test]
     fn escape() {
@@ -131,6 +130,8 @@ mod tests {
     #[cfg(target_os = "linux")]
     #[test]
     fn null_mode() {
+        use crate::{env, remote_linux_procfs};
+
         let printer = Printer {
             null: true,
             color: ColorMode::Never, // args.rs would set color to never if null is enabled
