@@ -15,7 +15,7 @@ mod env;
 mod platform_ext;
 mod printer;
 mod remote_debugger_helper;
-#[cfg(all(not(target_os = "linux"), target_family = "unix"))]
+#[cfg(unix_kvm)]
 mod remote_unix_kvm;
 #[cfg(target_family = "windows")]
 mod remote_windows;
