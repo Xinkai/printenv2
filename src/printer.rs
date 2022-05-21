@@ -1,8 +1,10 @@
 use crate::args::{ColorMode, EscapeMode};
 use crate::env::RecordPair;
 use crate::platform_ext::u8_vec_to_string;
+use crate::AppResult;
 use colored::{ColoredString, Colorize};
 use std::collections::HashMap;
+use std::io::Write;
 
 pub struct Printer<'a> {
     pub null: bool,
@@ -64,53 +66,47 @@ impl<'a> Printer<'a> {
         &self,
         record_results: &[RecordPair],
         variables: &[String],
-    ) -> Option<()> {
+    ) -> AppResult<Vec<u8>> {
+        let mut output = Vec::new();
         let dict: HashMap<_, _> = record_results
             .iter()
             .map(|(key, value)| (key.clone(), value.clone()))
             .collect();
-        let mut printed = false;
+
         for variable in variables {
             if let Some(value) = dict.get(variable.as_bytes()) {
-                print!(
+                write!(
+                    &mut output,
                     "{value}{separator}",
                     value = self.format(value, &FormatField::Value),
                     separator = if self.null { "\0" } else { "\n" },
-                );
-                printed = true;
+                )?;
             }
         }
-        if printed {
-            Some(())
-        } else {
-            None
-        }
+        Ok(output)
     }
 
-    fn print_without_variables(&self, record_results: &[RecordPair]) -> Option<()> {
+    fn print_without_variables(&self, record_results: &[RecordPair]) -> AppResult<Vec<u8>> {
+        let mut output = Vec::new();
         let equal_sign = "=";
-        let mut printed = false;
         for record_result in record_results {
-            print!(
+            write!(
+                &mut output,
                 "{key}{equal_sign}{value}{separator}",
                 key = self.format(&record_result.0, &FormatField::Key),
                 equal_sign = equal_sign.white(),
                 value = self.format(&record_result.1, &FormatField::Value),
                 separator = if self.null { "\0" } else { "\n" },
-            );
-            printed = true;
+            )?;
         }
-        if printed {
-            Some(())
-        } else {
-            None
-        }
+        Ok(output)
     }
 
-    pub fn print(&self, record_results: &[RecordPair]) -> Option<()> {
+    pub fn print(&self, record_results: &[RecordPair]) -> AppResult<Vec<u8>> {
         if self.color == ColorMode::Never {
             colored::control::set_override(false);
         }
+
         self.variables.map_or_else(
             || self.print_without_variables(record_results),
             |variables| self.print_with_variables(record_results, variables),
@@ -119,8 +115,10 @@ impl<'a> Printer<'a> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::Printer;
+    use crate::args::ColorMode;
+    use crate::{env, remote_linux_procfs};
 
     #[test]
     fn escape() {
@@ -128,5 +126,23 @@ mod test {
         for case in cases {
             assert_eq!(Printer::escape(case.0), case.1);
         }
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn null_mode() {
+        let printer = Printer {
+            null: true,
+            color: ColorMode::Never, // args.rs would set color to never if null is enabled
+            ..Printer::default()
+        };
+
+        let actual = {
+            let records = env::get_record_pairs_for_current_process();
+            printer.print(&records).unwrap()
+        };
+
+        let expected = remote_linux_procfs::get_environment_string(std::process::id()).unwrap();
+        assert_eq!(actual, expected);
     }
 }

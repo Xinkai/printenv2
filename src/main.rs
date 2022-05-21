@@ -5,7 +5,7 @@
 #![deny(clippy::cargo)]
 use std::ffi::OsString;
 use std::fs::File;
-use std::io::Read;
+use std::io::{Read, Stdout, Write};
 
 use std::process::exit;
 
@@ -16,6 +16,8 @@ mod platform_ext;
 mod printer;
 #[cfg(target_family = "unix")]
 mod remote_debugger_helper;
+#[cfg(target_os = "linux")]
+mod remote_linux_procfs;
 #[cfg(unix_kvm)]
 mod remote_unix_kvm;
 #[cfg(target_family = "windows")]
@@ -81,10 +83,13 @@ fn main() -> AppResult<()> {
                 sort_pairs(key_order, &mut results);
             }
 
-            match printer.print(&results) {
-                Some(_) => Ok(()),
-                None => exit(1),
+            let output = printer.print(&results)?;
+            Stdout::write(&mut std::io::stdout(), &output)?;
+
+            if output.is_empty() {
+                exit(1);
             }
+            Ok(())
         }
     }
 }
