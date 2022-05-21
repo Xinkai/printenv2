@@ -1,4 +1,5 @@
 use crate::args::KeyOrder;
+use crate::platform_ext;
 
 pub type RecordPair = (Vec<u8>, Vec<u8>);
 
@@ -24,6 +25,17 @@ pub fn sort_pairs(key_order: KeyOrder, records: &mut [RecordPair]) {
             records.sort_by(|a, b| b.0.cmp(&a.0));
         }
     }
+}
+
+pub fn get_record_pairs_for_current_process() -> Vec<RecordPair> {
+    std::env::vars_os()
+        .map(|(key, value)| {
+            (
+                platform_ext::os_string_to_u8_vec(&key),
+                platform_ext::os_string_to_u8_vec(&value),
+            )
+        })
+        .collect()
 }
 
 #[cfg(test)]

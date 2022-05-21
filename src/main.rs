@@ -72,14 +72,7 @@ fn main() -> AppResult<()> {
                     }
                     parse_env_var_string(&content)
                 }
-                None => std::env::vars_os()
-                    .map(|(key, value)| {
-                        (
-                            platform_ext::os_string_to_u8_vec(&key),
-                            platform_ext::os_string_to_u8_vec(&value),
-                        )
-                    })
-                    .collect(),
+                None => env::get_record_pairs_for_current_process(),
             };
 
             if let Some(key_order) = args.key_order {

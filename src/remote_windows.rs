@@ -339,3 +339,17 @@ pub fn get_environment_string(pid: u32) -> AppResult<String> {
 
     Ok(String::from_utf16(&environment)?)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::get_environment_string;
+    use crate::env::{get_record_pairs_for_current_process, parse_env_var_string};
+
+    #[test]
+    fn test_get_environment_string() {
+        let env_string = get_environment_string(std::process::id())?;
+        let actual = parse_env_var_string(env_string.as_bytes());
+        let expected = get_record_pairs_for_current_process();
+        assert_eq!(actual, expected);
+    }
+}
