@@ -5,6 +5,9 @@ pub enum AppError {
     StdIo(std::io::Error),
     #[cfg(windows)]
     WindowsCore(windows::core::Error),
+
+    #[cfg(unix)]
+    UnixErrorString(std::ffi::CString),
 }
 
 pub type AppResult<T> = Result<T, AppError>;
@@ -31,5 +34,12 @@ impl From<std::io::Error> for AppError {
 impl From<windows::core::Error> for AppError {
     fn from(err: windows::core::Error) -> Self {
         Self::WindowsCore(err)
+    }
+}
+
+#[cfg(unix)]
+impl From<std::ffi::CString> for AppError {
+    fn from(err_str: std::ffi::CString) -> Self {
+        Self::UnixErrorString(err_str)
     }
 }
