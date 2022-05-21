@@ -347,7 +347,7 @@ mod tests {
 
     #[test]
     fn test_get_environment_string() {
-        let env_string = get_environment_string(std::process::id())?;
+        let env_string = get_environment_string(std::process::id()).unwrap();
         let actual = parse_env_var_string(env_string.as_bytes());
         let expected = get_record_pairs_for_current_process();
         assert_eq!(actual, expected);
