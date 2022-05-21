@@ -14,6 +14,7 @@ mod definition;
 mod env;
 mod platform_ext;
 mod printer;
+#[cfg(target_family = "unix")]
 mod remote_debugger_helper;
 #[cfg(unix_kvm)]
 mod remote_unix_kvm;
