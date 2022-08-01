@@ -1,4 +1,4 @@
-use clap::{ArgEnum, CommandFactory, ErrorKind, Parser, Subcommand};
+use clap::{ArgEnum, CommandFactory, ErrorKind, Parser};
 use std::path::PathBuf;
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ArgEnum, Debug)]
@@ -20,19 +20,29 @@ pub enum KeyOrder {
     Desc,
 }
 
-#[derive(Subcommand, Debug)]
-pub enum Commands {
-    /// Use a debugger to dump environment variable string from memory of remote process
-    RemoteEnvStringDump { pid: u32 },
+#[cfg(debugger_helper)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ArgEnum, Debug)]
+pub enum DebuggerHelper {
+    Gdb,
 }
 
 /// Print environment variables
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 pub struct Args {
-    /// separate each output with NUL, not newline
+    /// Separate each output with NUL, not newline
     #[clap(short = '0', long)]
     pub null: bool,
+
+    /// Use environment variables of another running process.
+    #[cfg(remote_env)]
+    #[clap(long, required = false)]
+    pub pid: Option<u32>,
+
+    #[cfg(debugger_helper)]
+    #[clap(long, arg_enum, required = false)]
+    /// Dumps a debugging script for inspecting the in-present environment variables of another process.
+    pub debugger_helper: Option<DebuggerHelper>,
 
     /// Controls colorfulness of output
     #[clap(long, arg_enum, required = false)]
@@ -46,27 +56,17 @@ pub struct Args {
     #[clap(long, arg_enum, required = false)]
     pub escape: Option<EscapeMode>,
 
-    /// Show the environment variables recorded by a file. It expects the same format as /proc/<fd>/environ file on Linux.
+    /// Load environment variables from a file. It expects the same format as /proc/<fd>/environ file on Linux.
     #[clap(long, parse(from_os_str), required = false)]
-    pub by_env_string: Option<PathBuf>,
+    pub load: Option<PathBuf>,
 
     /// Specified variable name(s)
     #[clap(required = false)]
     pub variables: Vec<String>,
-
-    #[clap(subcommand)]
-    pub command: Option<Commands>,
 }
 
 pub fn parse() -> Args {
-    let mut args = Args::parse();
-
-    if let Some(Commands::RemoteEnvStringDump { .. }) = args.command {
-        args.null = true;
-        if args.color == Some(ColorMode::Auto) {
-            args.color = Some(ColorMode::Never);
-        }
-    }
+    let args = Args::parse();
 
     if args.color == Some(ColorMode::Never) {
         colored::control::set_override(false);
@@ -86,6 +86,42 @@ pub fn parse() -> Args {
         cmd.error(
             ErrorKind::ArgumentConflict,
             "Providing VARIABLES does not work with key-order mode",
+        )
+        .exit();
+    }
+
+    #[cfg(debugger_helper)]
+    #[allow(clippy::collapsible_if)]
+    if args.debugger_helper.is_some() {
+        if args.null
+            || (args.color == Some(ColorMode::Always) || args.escape == Some(EscapeMode::Yes))
+            || !args.variables.is_empty()
+            || args.key_order.is_some()
+        {
+            let mut cmd = Args::command();
+            cmd.error(
+                ErrorKind::ArgumentConflict,
+                "--debugger-helper does not work with other arguments",
+            )
+            .exit();
+        }
+    }
+
+    #[cfg(remote_env)]
+    if args.pid.is_some() && args.load.is_some() {
+        let mut cmd = Args::command();
+        cmd.error(
+            ErrorKind::ArgumentConflict,
+            "--pid and --load cannot be used together",
+        )
+        .exit();
+    }
+
+    if args.null && args.load.is_some() {
+        let mut cmd = Args::command();
+        cmd.error(
+            ErrorKind::ArgumentConflict,
+            "--null and --load cannot be used together",
         )
         .exit();
     }

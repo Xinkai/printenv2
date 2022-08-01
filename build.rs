@@ -8,8 +8,13 @@ fn main() {
 
     #[allow(clippy::match_same_arms)]
     match (unix.as_deref(), os.as_deref()) {
-        (Ok(_), Ok("linux")) => (),
-        (Ok(_), Ok("macos")) => (),
+        (Ok(_), Ok("linux")) => {
+            println!("cargo:rustc-cfg=debugger_helper");
+            println!("cargo:rustc-cfg=remote_env");
+        }
+        (Ok(_), Ok("macos")) => {
+            println!("cargo:rustc-cfg=debugger_helper");
+        }
         (Ok(_), _) => {
             println!("cargo:rerun-if-changed=src/kvm-wrapper.h");
 
@@ -24,7 +29,13 @@ fn main() {
                     .write_to_file(out_path.join("kvm-bindings.rs"))
                     .expect("Couldn't write kvm-bindings!");
                 println!("cargo:rustc-cfg=unix_kvm");
+                println!("cargo:rustc-cfg=remote_env");
             }
+
+            println!("cargo:rustc-cfg=debugger_helper");
+        }
+        (Err(_), Ok("windows")) => {
+            println!("cargo:rustc-cfg=remote_env");
         }
         _ => (),
     }

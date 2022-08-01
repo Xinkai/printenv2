@@ -20,22 +20,34 @@ Installation
   * Arch Linux: `paru -S printenv2`
 * via Cargo: Run `cargo install printenv2` if you already have Rust development environment setup.
 
-Notes on remote mode
+Notes on Remote Mode
 --------------------
 
-`printenv2` comes with the ability to read environment variables of another running process. However, mileage varies depending on the operating system. 
+`printenv2` comes with the ability to read environment variables of another running process.
 
-The following table shows how each platform is supported.
+Basic usage: 
+```sh
+# Make sure you have privilege to inspect the target process.
+printenv2 --pid 1000
+```
 
-| Platform | Environment variables at startup                                                         | Environment variables in present                                                                                                                                                                                                                                                                                 |
-|----------|------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Linux    | `printenv2 --by-env-string /proc/<PID>/environ`.<br/>`sudo` for processes you don't own. | Use at your own risk.<br/>A debugger must be used to dump the memory where environment variables are stored. `printenv2 remote-env-string-dump` generates a shell script for that using `gdb`.<br/>`sh <(printenv2 remote-env-string-dump <PID>) \| printenv2 --by-env-string -`.<br/>`sudo` is likely required. |
-| Windows  | Unsupported.                                                                             | Use at your own risk.<br/>Using undocumented APIs to dump the memory where environment variables are stored.<br/>`printenv2 remote-env-string-dump <PID> \| printenv2 --by-env-string -`                                                                                                                         |
-| Other    | Unsupported.                                                                             | Unsupported.                                                                                                                                                                                                                                                                                                     |
+Platform-specifics:
+
+| Platform    | Environment variables at startup | Environment variables in present                                                                                                                                                                          |
+|-------------|----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Linux       | `printenv2 --pid <PID>`          | Unsafe[^safety].<br/>`printenv2 --debugger-helper` generates a shell script for that using `gdb`.<br/>`sh <(printenv2 --debugger-helper=gdb) <PID> \  printenv2 --load -`.<br/>`sudo` is likely required. |
+| Windows     | Unsupported.                     | Unsafe[^safety].<br/>`printenv2 --pid <PID>`                                                                                                                                                              |
+| Unix (*BSD) | `printenv2 --pid <PID>`          | Unsafe[^safety].<br/>`printenv2 --debugger-helper` generates a shell script for that using `gdb`.<br/>`sh <(printenv2 --debugger-helper=gdb) <PID> \  printenv2 --load -`.<br/>`sudo` is likely required. |
+| macOS       | Unsupported.                     | Unsupported.                                                                                                                                                                                              |
+| Other       | Unsupported.                     | Unsupported.                                                                                                                                                                                              |
+
+[^safety]:
+* Safety: Be careful. These methods use a debugger or undocumented APIs.
 
 TODO
 ----
 - [ ] Remote mode on more OSes
+- [ ] Json output
 
 License
 -------

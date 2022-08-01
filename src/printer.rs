@@ -1,5 +1,5 @@
 use crate::args::{ColorMode, EscapeMode};
-use crate::env::RecordPair;
+use crate::env::{Env, RecordPair};
 use crate::platform_ext::u8_vec_to_string;
 use crate::AppResult;
 use colored::{ColoredString, Colorize};
@@ -62,16 +62,12 @@ impl<'a> Printer<'a> {
             .collect()
     }
 
-    fn print_with_variables(
-        &self,
-        record_results: &[RecordPair],
-        variables: &[String],
-    ) -> AppResult<Vec<u8>> {
+    fn print_with_variables(&self, env: &Env, variables: &[String]) -> AppResult<Vec<u8>> {
         let mut output = Vec::new();
-        let dict: HashMap<_, _> = record_results
-            .iter()
-            .map(|(key, value)| (key.clone(), value.clone()))
-            .collect();
+        let mut dict: HashMap<Vec<u8>, Vec<u8>> = HashMap::new();
+        for RecordPair(key, value) in env.iter() {
+            assert_eq!(dict.insert(key.clone(), value.clone()), None);
+        }
 
         for variable in variables {
             if let Some(value) = dict.get(variable.as_bytes()) {
@@ -86,10 +82,10 @@ impl<'a> Printer<'a> {
         Ok(output)
     }
 
-    fn print_without_variables(&self, record_results: &[RecordPair]) -> AppResult<Vec<u8>> {
+    fn print_without_variables(&self, env: &Env) -> AppResult<Vec<u8>> {
         let mut output = Vec::new();
         let equal_sign = "=";
-        for record_result in record_results {
+        for record_result in env.iter() {
             write!(
                 &mut output,
                 "{key}{equal_sign}{value}{separator}",
@@ -102,14 +98,13 @@ impl<'a> Printer<'a> {
         Ok(output)
     }
 
-    pub fn print(&self, record_results: &[RecordPair]) -> AppResult<Vec<u8>> {
+    pub fn print(&self, env: &Env) -> AppResult<Vec<u8>> {
         if self.color == ColorMode::Never {
             colored::control::set_override(false);
         }
-
         self.variables.map_or_else(
-            || self.print_without_variables(record_results),
-            |variables| self.print_with_variables(record_results, variables),
+            || self.print_without_variables(env),
+            |variables| self.print_with_variables(env, variables),
         )
     }
 }
@@ -126,11 +121,11 @@ mod tests {
         }
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(remote_env)]
     #[test]
     fn null_mode() {
         use crate::args::ColorMode;
-        use crate::{env, remote_linux_procfs};
+        use crate::env;
 
         let printer = Printer {
             null: true,
@@ -139,11 +134,11 @@ mod tests {
         };
 
         let actual = {
-            let records = env::get_record_pairs_for_current_process();
-            printer.print(&records).unwrap()
+            let env_obj = env::Env::new();
+            printer.print(&env_obj).unwrap()
         };
 
-        let expected = remote_linux_procfs::get_environment_string(std::process::id()).unwrap();
+        let expected = env::remote::get_environment_string(std::process::id()).unwrap();
         assert_eq!(actual, expected);
     }
 }

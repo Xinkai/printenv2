@@ -1,61 +1,136 @@
 use crate::args::KeyOrder;
 use crate::platform_ext;
+use std::cmp::Ordering;
+use std::slice::Iter;
 
-pub type RecordPair = (Vec<u8>, Vec<u8>);
+#[derive(Eq, Debug)]
+pub struct RecordPair(pub Vec<u8>, pub Vec<u8>);
+
+impl PartialEq<Self> for RecordPair {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.eq(&other.0)
+    }
+}
+
+impl PartialOrd<Self> for RecordPair {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for RecordPair {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.0.cmp(&other.0)
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct Env(pub Vec<RecordPair>);
+
+impl Env {
+    pub fn iter(&self) -> Iter<'_, RecordPair> {
+        self.0.iter()
+    }
+
+    pub fn sort_by_key(&mut self, key_order: KeyOrder) {
+        // Sort results if needed
+        match key_order {
+            KeyOrder::Asc => {
+                self.0.sort();
+            }
+            KeyOrder::Desc => {
+                self.0.sort_by(|a, b| b.cmp(a));
+            }
+        }
+    }
+}
+
+#[cfg(remote_env)]
+pub mod remote {
+    use crate::AppResult;
+    pub fn get_environment_string(pid: u32) -> AppResult<Vec<u8>> {
+        #[cfg(target_os = "linux")]
+        {
+            crate::remote_linux_procfs::get_environment_string(pid)
+        }
+
+        #[cfg(unix_kvm)]
+        {
+            crate::remote_unix_kvm::get_environment_string(pid)
+        }
+
+        #[cfg(target_family = "windows")]
+        {
+            crate::remote_windows::get_environment_string(pid)
+        }
+    }
+
+    #[test]
+    fn test_get_environment_string() {
+        use crate::args::ColorMode;
+        use crate::printer::Printer;
+
+        let actual = get_environment_string(std::process::id()).unwrap();
+        let expected = super::Env::new();
+        let printer = Printer {
+            null: true,
+            color: ColorMode::Never,
+            ..Default::default()
+        };
+        assert_eq!(actual, printer.print(&expected).unwrap());
+    }
+}
 
 fn parse_record_pair(record: &[u8]) -> Option<RecordPair> {
     record
         .iter()
         .position(|c| b'=' == *c)
-        .map(|i| ((&record[..i]).to_vec(), (&record[i + 1..]).to_vec()))
+        .map(|i| RecordPair((&record[..i]).to_vec(), (&record[i + 1..]).to_vec()))
 }
 
-pub fn parse_env_var_string(raw_bytes: &[u8]) -> Vec<RecordPair> {
-    raw_bytes
-        .split(|c| *c == 0)
-        .filter_map(parse_record_pair)
-        .collect()
-}
-
-pub fn sort_pairs(key_order: KeyOrder, records: &mut [RecordPair]) {
-    // Sort results if needed
-    match key_order {
-        KeyOrder::Asc => {
-            records.sort_by(|a, b| a.0.cmp(&b.0));
-        }
-        KeyOrder::Desc => {
-            records.sort_by(|a, b| b.0.cmp(&a.0));
-        }
+impl From<Vec<u8>> for Env {
+    fn from(env_string: Vec<u8>) -> Self {
+        Self(
+            env_string
+                .split(|c| *c == 0)
+                .filter_map(parse_record_pair)
+                .collect(),
+        )
     }
 }
 
-pub fn get_record_pairs_for_current_process() -> Vec<RecordPair> {
-    std::env::vars_os()
-        .map(|(key, value)| {
-            (
-                platform_ext::os_string_to_u8_vec(&key),
-                platform_ext::os_string_to_u8_vec(&value),
-            )
-        })
-        .collect()
+impl Env {
+    pub fn new() -> Self {
+        Self(
+            std::env::vars_os()
+                .map(|(key, value)| {
+                    RecordPair(
+                        platform_ext::os_string_to_u8_vec(&key),
+                        platform_ext::os_string_to_u8_vec(&value),
+                    )
+                })
+                .collect(),
+        )
+    }
 }
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    use super::{Env, RecordPair};
 
     #[test]
     fn parse_records_by_env_string() {
         let cases = vec![(
             b"a=b\0c=d\0",
-            vec![
-                (b"a".to_vec(), b"b".to_vec()),
-                (b"c".to_vec(), b"d".to_vec()),
-            ],
+            Env(vec![
+                RecordPair(b"a".to_vec(), b"b".to_vec()),
+                RecordPair(b"c".to_vec(), b"d".to_vec()),
+            ]),
         )];
 
         for case in cases {
-            assert_eq!(parse_env_var_string(case.0), case.1);
+            let env_obj = Env::from(case.0.to_vec());
+            assert_eq!(env_obj, case.1);
         }
     }
 }

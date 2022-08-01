@@ -1,12 +1,11 @@
-pub fn get_gdb_helper(pid: u32) -> String {
-    format!(
-        r##"#!/bin/sh
+pub fn get_gdb_helper() -> String {
+    r##"#!/bin/sh
 
 set -eu
 
 OUTPUT=$(mktemp --quiet)
 
-cat << EOF | gdb --pid={}
+cat << EOF | gdb --pid="$1"
 set pagination off
 set variable \$env = (char**) __environ
 set variable \$i=0
@@ -23,7 +22,6 @@ EOF
 
 cat "$OUTPUT"
 rm "$OUTPUT"
-"##,
-        pid
-    )
+"##
+    .to_string()
 }
