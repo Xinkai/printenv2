@@ -33,16 +33,15 @@ printenv2 --pid 1000
 
 Platform-specifics:
 
-| Platform    | Environment variables at startup | Environment variables in present                                                                                                                                                                          |
-|-------------|----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Linux       | `printenv2 --pid <PID>`          | Unsafe[^safety].<br/>`printenv2 --debugger-helper` generates a shell script for that using `gdb`.<br/>`sh <(printenv2 --debugger-helper=gdb) <PID> \  printenv2 --load -`.<br/>`sudo` is likely required. |
-| Windows     | Unsupported.                     | Unsafe[^safety].<br/>`printenv2 --pid <PID>`                                                                                                                                                              |
-| Unix (*BSD) | `printenv2 --pid <PID>`          | Unsafe[^safety].<br/>`printenv2 --debugger-helper` generates a shell script for that using `gdb`.<br/>`sh <(printenv2 --debugger-helper=gdb) <PID> \  printenv2 --load -`.<br/>`sudo` is likely required. |
-| macOS       | Unsupported.                     | Unsupported.                                                                                                                                                                                              |
-| Other       | Unsupported.                     | Unsupported.                                                                                                                                                                                              |
+| Platform    | Environment variables at startup | Environment variables in present                                                                                                                                                                     |
+|-------------|----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Linux       | `printenv2 --pid <PID>`          | Unsafe[^1].<br/>`printenv2 --debugger-helper` generates a shell script for that using `gdb`.<br/>`sh <(printenv2 --debugger-helper=gdb) <PID> \| printenv2 --load -`.<br/>`sudo` is likely required. |
+| Windows     | Unsupported.                     | Unsafe[^1].<br/>`printenv2 --pid <PID>`                                                                                                                                                              |
+| Unix (*BSD) | `printenv2 --pid <PID>`          | Unsafe[^1].<br/>`printenv2 --debugger-helper` generates a shell script for that using `gdb`.<br/>`sh <(printenv2 --debugger-helper=gdb) <PID> \| printenv2 --load -`.<br/>`sudo` is likely required. |
+| macOS       | Unsupported.                     | Unsupported.                                                                                                                                                                                         |
+| Other       | Unsupported.                     | Unsupported.                                                                                                                                                                                         |
 
-[^safety]:
-* Safety: Be careful. These methods use a debugger or undocumented APIs.
+[^1]: Be careful. These methods use a debugger or undocumented APIs.
 
 TODO
 ----
