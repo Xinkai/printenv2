@@ -267,7 +267,7 @@ mod oxidation {
     }
 }
 
-pub fn get_environment_string(pid: u32) -> AppResult<String> {
+pub fn get_environment_string(pid: u32) -> AppResult<Vec<u8>> {
     let current_process = oxidation::get_current_process();
 
     let token_handle =
@@ -322,7 +322,7 @@ pub fn get_environment_string(pid: u32) -> AppResult<String> {
     let cap = (user_process_parameters.EnvironmentSize / 2) as usize;
 
     let environment = {
-        let mut out = vec![0u16; cap];
+        let mut out = vec![0u16; cap - 1];
 
         oxidation::read_process_memory(
             process_handle.clone(),
@@ -337,19 +337,5 @@ pub fn get_environment_string(pid: u32) -> AppResult<String> {
     drop(token_handle);
     drop(process_handle);
 
-    Ok(String::from_utf16(&environment)?)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::get_environment_string;
-    use crate::env::{get_record_pairs_for_current_process, parse_env_var_string};
-
-    #[test]
-    fn test_get_environment_string() {
-        let env_string = get_environment_string(std::process::id()).unwrap();
-        let actual = parse_env_var_string(env_string.as_bytes());
-        let expected = get_record_pairs_for_current_process();
-        assert_eq!(actual, expected);
-    }
+    Ok(String::from_utf16(&environment)?.into())
 }
