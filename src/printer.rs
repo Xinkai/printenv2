@@ -120,25 +120,4 @@ mod tests {
             assert_eq!(Printer::escape(case.0), case.1);
         }
     }
-
-    #[cfg(remote_env)]
-    #[test]
-    fn null_mode() {
-        use crate::args::ColorMode;
-        use crate::env;
-
-        let printer = Printer {
-            null: true,
-            color: ColorMode::Never, // args.rs would set color to never if null is enabled
-            ..Printer::default()
-        };
-
-        let actual = {
-            let env_obj = env::Env::new();
-            printer.print(&env_obj).unwrap()
-        };
-
-        let expected = env::remote::get_environment_string(std::process::id()).unwrap();
-        assert_eq!(actual, expected);
-    }
 }

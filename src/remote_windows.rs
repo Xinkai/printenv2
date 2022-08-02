@@ -322,7 +322,7 @@ pub fn get_environment_string(pid: u32) -> AppResult<Vec<u8>> {
     let cap = (user_process_parameters.EnvironmentSize / 2) as usize;
 
     let environment = {
-        let mut out = vec![0u16; cap];
+        let mut out = vec![0u16; cap - 1];
 
         oxidation::read_process_memory(
             process_handle.clone(),
