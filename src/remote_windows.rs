@@ -322,7 +322,7 @@ pub fn get_environment_string(pid: u32) -> AppResult<Vec<u8>> {
     let cap = (user_process_parameters.EnvironmentSize / 2) as usize;
 
     let environment = {
-        let mut out = vec![0u16; cap - 1];
+        let mut out = vec![0u16; cap];
 
         oxidation::read_process_memory(
             process_handle.clone(),
@@ -337,5 +337,11 @@ pub fn get_environment_string(pid: u32) -> AppResult<Vec<u8>> {
     drop(token_handle);
     drop(process_handle);
 
-    Ok(String::from_utf16(&environment)?.into())
+    let result = {
+        let mut v: Vec<u8> = String::from_utf16(&environment)?.into();
+        v.truncate(v.len() - 1);
+        v
+    };
+
+    Ok(result)
 }
