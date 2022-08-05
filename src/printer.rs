@@ -114,7 +114,6 @@ mod tests {
     use super::Printer;
     use crate::args::{ColorMode, EscapeMode};
     use crate::env::Env;
-    use colored::Colorize;
 
     #[test]
     fn escape() {
@@ -153,7 +152,10 @@ mod tests {
     }
 
     #[test]
+    #[cfg(target_family = "unix")]
     fn invalid_utf8() {
+        use colored::Colorize;
+
         let env = Env::from(vec![
             0x56, 0x41, 0x4c, 0x3d, 0x54, 0x65, 0x73, 0x74, 0xc3, 0x28, 0x00,
         ]);
