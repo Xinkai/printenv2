@@ -122,6 +122,8 @@ impl Env {
 #[cfg(test)]
 mod test {
     use super::{Env, RecordPair};
+    use crate::args::{ColorMode, KeyOrder};
+    use crate::Printer;
 
     #[test]
     fn parse_records_by_env_string() {
@@ -136,6 +138,34 @@ mod test {
         for case in cases {
             let env_obj = Env::from(case.0.to_vec());
             assert_eq!(env_obj, case.1);
+        }
+    }
+
+    #[test]
+    fn sort() {
+        let mut env = Env::from(Vec::from("A=111\0C=333\0B=222\0"));
+
+        let printer = Printer {
+            null: true,
+            color: ColorMode::Never,
+            ..Default::default()
+        };
+
+        {
+            let actual = printer.print(&env).unwrap();
+            assert_eq!(actual, Vec::from("A=111\0C=333\0B=222\0"));
+        }
+
+        {
+            env.sort_by_key(KeyOrder::Asc);
+            let actual = printer.print(&env).unwrap();
+            assert_eq!(actual, Vec::from("A=111\0B=222\0C=333\0"));
+        }
+
+        {
+            env.sort_by_key(KeyOrder::Desc);
+            let actual = printer.print(&env).unwrap();
+            assert_eq!(actual, Vec::from("C=333\0B=222\0A=111\0"));
         }
     }
 }
