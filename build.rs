@@ -13,6 +13,21 @@ fn main() {
             println!("cargo:rustc-cfg=remote_env");
         }
         (Ok(_), Ok("macos")) => {
+            println!("cargo:rerun-if-changed=src/apple-sysctl-wrapper.h");
+
+            if let Ok(sysctl_bindings) = bindgen::Builder::default()
+                .header("src/apple-sysctl-wrapper.h")
+                .parse_callbacks(Box::new(bindgen::CargoCallbacks))
+                .generate()
+            {
+                let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+                sysctl_bindings
+                    .write_to_file(out_path.join("apple-sysctl-bindings.rs"))
+                    .expect("Couldn't write apple-sysctl-bindings!");
+                println!("cargo:rustc-cfg=unix_apple_sysctl");
+                println!("cargo:rustc-cfg=remote_env");
+            }
+
             println!("cargo:rustc-cfg=debugger_helper");
         }
         (Ok(_), _) => {

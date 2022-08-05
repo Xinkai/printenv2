@@ -63,6 +63,11 @@ pub mod remote {
         {
             crate::remote_windows::get_environment_string(pid)
         }
+
+        #[cfg(unix_apple_sysctl)]
+        {
+            crate::remote_apple_sysctl::get_environment_string(pid)
+        }
     }
 
     #[test]

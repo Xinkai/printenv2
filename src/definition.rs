@@ -9,6 +9,12 @@ pub enum AppError {
 
     #[cfg(unix_kvm)]
     UnixErrorString(std::ffi::CString),
+
+    #[cfg(unix_apple_sysctl)]
+    TryFromIntError(std::num::TryFromIntError),
+
+    #[cfg(unix_apple_sysctl)]
+    TryFromSliceError(std::array::TryFromSliceError),
 }
 
 pub type AppResult<T> = Result<T, AppError>;
@@ -43,5 +49,19 @@ impl From<windows::core::Error> for AppError {
 impl From<std::ffi::CString> for AppError {
     fn from(err_str: std::ffi::CString) -> Self {
         Self::UnixErrorString(err_str)
+    }
+}
+
+#[cfg(unix_apple_sysctl)]
+impl From<std::num::TryFromIntError> for AppError {
+    fn from(err: std::num::TryFromIntError) -> Self {
+        Self::TryFromIntError(err)
+    }
+}
+
+#[cfg(unix_apple_sysctl)]
+impl From<std::array::TryFromSliceError> for AppError {
+    fn from(err: std::array::TryFromSliceError) -> Self {
+        Self::TryFromSliceError(err)
     }
 }
