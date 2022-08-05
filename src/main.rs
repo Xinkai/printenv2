@@ -3,6 +3,7 @@
 #![deny(clippy::pedantic)]
 #![deny(clippy::nursery)]
 #![deny(clippy::cargo)]
+
 use std::ffi::OsString;
 use std::fs::File;
 use std::io::{Read, Stdout, Write};
@@ -12,6 +13,8 @@ mod definition;
 mod env;
 mod platform_ext;
 mod printer;
+#[cfg(unix_apple_sysctl)]
+mod remote_apple_sysctl;
 #[cfg(debugger_helper)]
 mod remote_debugger_helper;
 #[cfg(all(remote_env, target_os = "linux"))]
