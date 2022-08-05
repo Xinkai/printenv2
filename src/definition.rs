@@ -9,8 +9,10 @@ pub enum AppError {
 
     #[cfg(unix_kvm)]
     UnixErrorString(std::ffi::CString),
+    #[cfg(unix_kvm)]
+    NulError(std::ffi::NulError),
 
-    #[cfg(unix_apple_sysctl)]
+    #[cfg(any(unix_kvm, unix_apple_sysctl))]
     TryFromIntError(std::num::TryFromIntError),
 
     #[cfg(unix_apple_sysctl)]
@@ -52,7 +54,14 @@ impl From<std::ffi::CString> for AppError {
     }
 }
 
-#[cfg(unix_apple_sysctl)]
+#[cfg(unix_kvm)]
+impl From<std::ffi::NulError> for AppError {
+    fn from(err: std::ffi::NulError) -> Self {
+        Self::NulError(err)
+    }
+}
+
+#[cfg(any(unix_kvm, unix_apple_sysctl))]
 impl From<std::num::TryFromIntError> for AppError {
     fn from(err: std::num::TryFromIntError) -> Self {
         Self::TryFromIntError(err)

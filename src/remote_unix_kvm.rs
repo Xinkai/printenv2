@@ -28,13 +28,13 @@ mod oxidation {
         pub fn try_new() -> AppResult<Self> {
             let mut errbuf = [0i8; _POSIX2_LINE_MAX as usize];
 
-            let corefile = CString::new("/dev/null").unwrap();
+            let corefile = CString::new("/dev/null")?;
             let kd = unsafe {
                 kvm_openfiles(
                     std::ptr::null(),
                     corefile.as_ptr(),
                     std::ptr::null(),
-                    O_RDONLY.try_into().unwrap(),
+                    O_RDONLY.try_into()?,
                     errbuf.as_mut_ptr(),
                 )
             };
@@ -52,8 +52,8 @@ mod oxidation {
             let proc = unsafe {
                 kvm_getprocs(
                     self.kd,
-                    KERN_PROC_PID.try_into().unwrap(),
-                    pid.try_into().unwrap(),
+                    KERN_PROC_PID.try_into()?,
+                    pid.try_into()?,
                     &mut cnt,
                 )
             };
