@@ -1,4 +1,4 @@
-// #![deny(warnings)]
+#![deny(warnings)]
 #![deny(clippy::all)]
 #![deny(clippy::pedantic)]
 #![deny(clippy::nursery)]
@@ -16,7 +16,7 @@ mod printer;
 mod remote_debugger_helper;
 #[cfg(all(remote_env, target_os = "linux"))]
 mod remote_linux_procfs;
-#[cfg(all(remote_env, unix_kvm))]
+#[cfg(unix_kvm)]
 mod remote_unix_kvm;
 #[cfg(all(remote_env, target_family = "windows"))]
 mod remote_windows;
