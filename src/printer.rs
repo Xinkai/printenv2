@@ -112,6 +112,8 @@ impl<'a> Printer<'a> {
 #[cfg(test)]
 mod tests {
     use super::Printer;
+    use crate::args::{ColorMode, EscapeMode};
+    use crate::env::Env;
 
     #[test]
     fn escape() {
@@ -119,5 +121,59 @@ mod tests {
         for case in cases {
             assert_eq!(Printer::escape(case.0), case.1);
         }
+    }
+
+    #[test]
+    fn print_escape() {
+        let env = Env::from(Vec::from("LINEBREAK=\r\n\0TAB=\t\0"));
+
+        let printer = Printer {
+            color: ColorMode::Never,
+            escape: EscapeMode::Yes,
+            ..Default::default()
+        };
+
+        let actual = printer.print(&env).unwrap();
+        assert_eq!(actual, Vec::from("LINEBREAK=\\r\\n\nTAB=\\t\n"));
+    }
+
+    #[test]
+    fn with_variables() {
+        let env = Env::from(Vec::from("VAR1=foo\0VAR2=bar\0"));
+        let variables = vec!["VAR1".into()];
+        let printer = Printer {
+            color: ColorMode::Never,
+            variables: Some(&variables),
+            ..Default::default()
+        };
+
+        let actual = printer.print(&env).unwrap();
+        assert_eq!(actual, Vec::from("foo\n"));
+    }
+
+    #[test]
+    #[cfg(target_family = "unix")]
+    fn invalid_utf8() {
+        use colored::Colorize;
+
+        let env = Env::from(vec![
+            0x56, 0x41, 0x4c, 0x3d, 0x54, 0x65, 0x73, 0x74, 0xc3, 0x28, 0x00,
+        ]);
+
+        let printer = Printer {
+            color: ColorMode::Always,
+            ..Default::default()
+        };
+        let actual = printer.print(&env).unwrap();
+        assert_eq!(
+            actual,
+            Vec::from(format!(
+                "{}{}{}{}",
+                "VAL".yellow(),
+                "=",
+                "Test\\xc3(".red(),
+                "\n"
+            ))
+        );
     }
 }
