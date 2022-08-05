@@ -1,12 +1,13 @@
 #[derive(Debug)]
 pub enum AppError {
     Utf8Error(std::str::Utf8Error),
-    Utf16Error(std::string::FromUtf16Error),
     StdIo(std::io::Error),
     #[cfg(windows)]
     WindowsCore(windows::core::Error),
+    #[cfg(windows)]
+    Utf16Error(std::string::FromUtf16Error),
 
-    #[cfg(unix)]
+    #[cfg(unix_kvm)]
     UnixErrorString(std::ffi::CString),
 }
 
@@ -18,6 +19,7 @@ impl From<std::str::Utf8Error> for AppError {
     }
 }
 
+#[cfg(windows)]
 impl From<std::string::FromUtf16Error> for AppError {
     fn from(err: std::string::FromUtf16Error) -> Self {
         Self::Utf16Error(err)
@@ -37,7 +39,7 @@ impl From<windows::core::Error> for AppError {
     }
 }
 
-#[cfg(unix)]
+#[cfg(unix_kvm)]
 impl From<std::ffi::CString> for AppError {
     fn from(err_str: std::ffi::CString) -> Self {
         Self::UnixErrorString(err_str)
