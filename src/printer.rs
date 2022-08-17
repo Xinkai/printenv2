@@ -1,25 +1,26 @@
 use crate::args::{ColorMode, EscapeMode};
-use crate::env::{Env, RecordPair};
+use crate::env::Env;
 use crate::platform_ext::u8_vec_to_string;
 use crate::AppResult;
 use colored::{ColoredString, Colorize};
-use std::collections::HashMap;
 use std::io::Write;
 
-pub struct Printer<'a> {
+pub struct Printer {
     pub null: bool,
+    pub json: bool,
     pub color: ColorMode,
     pub escape: EscapeMode,
-    pub variables: Option<&'a Vec<String>>,
+    pub include_keys: bool,
 }
 
-impl<'a> Default for Printer<'a> {
+impl Default for Printer {
     fn default() -> Self {
         Self {
             null: false,
+            json: false,
             color: ColorMode::Auto,
             escape: EscapeMode::No,
-            variables: None,
+            include_keys: true,
         }
     }
 }
@@ -29,7 +30,7 @@ enum FormatField {
     Value,
 }
 
-impl<'a> Printer<'a> {
+impl Printer {
     fn format(&self, bytes: &[u8], field: &FormatField) -> ColoredString {
         match u8_vec_to_string(bytes) {
             Ok(string) => {
@@ -62,50 +63,37 @@ impl<'a> Printer<'a> {
             .collect()
     }
 
-    fn print_with_variables(&self, env: &Env, variables: &[String]) -> AppResult<Vec<u8>> {
-        let mut output = Vec::new();
-        let mut dict: HashMap<Vec<u8>, Vec<u8>> = HashMap::new();
-        for RecordPair(key, value) in env.iter() {
-            assert_eq!(dict.insert(key.clone(), value.clone()), None);
-        }
-
-        for variable in variables {
-            if let Some(value) = dict.get(variable.as_bytes()) {
-                write!(
-                    &mut output,
-                    "{value}{separator}",
-                    value = self.format(value, &FormatField::Value),
-                    separator = if self.null { "\0" } else { "\n" },
-                )?;
-            }
-        }
-        Ok(output)
-    }
-
-    fn print_without_variables(&self, env: &Env) -> AppResult<Vec<u8>> {
-        let mut output = Vec::new();
-        let equal_sign = "=";
-        for record_result in env.iter() {
-            write!(
-                &mut output,
-                "{key}{equal_sign}{value}{separator}",
-                key = self.format(&record_result.0, &FormatField::Key),
-                equal_sign = equal_sign.white(),
-                value = self.format(&record_result.1, &FormatField::Value),
-                separator = if self.null { "\0" } else { "\n" },
-            )?;
-        }
-        Ok(output)
-    }
-
     pub fn print(&self, env: &Env) -> AppResult<Vec<u8>> {
         if self.color == ColorMode::Never {
             colored::control::set_override(false);
         }
-        self.variables.map_or_else(
-            || self.print_without_variables(env),
-            |variables| self.print_with_variables(env, variables),
-        )
+
+        if self.json {
+            Ok(serde_json::to_vec(env)?)
+        } else {
+            let mut output = Vec::new();
+            let equal_sign = "=";
+            for record_result in env.iter() {
+                if self.include_keys {
+                    write!(
+                        &mut output,
+                        "{key}{equal_sign}{value}{separator}",
+                        key = self.format(&record_result.0, &FormatField::Key),
+                        equal_sign = equal_sign.white(),
+                        value = self.format(&record_result.1, &FormatField::Value),
+                        separator = if self.null { "\0" } else { "\n" },
+                    )?;
+                } else {
+                    write!(
+                        &mut output,
+                        "{value}{separator}",
+                        value = self.format(&record_result.1, &FormatField::Value),
+                        separator = if self.null { "\0" } else { "\n" },
+                    )?;
+                }
+            }
+            Ok(output)
+        }
     }
 }
 
@@ -138,17 +126,16 @@ mod tests {
     }
 
     #[test]
-    fn with_variables() {
+    fn not_include_keys() {
         let env = Env::from(Vec::from("VAR1=foo\0VAR2=bar\0"));
-        let variables = vec!["VAR1".into()];
         let printer = Printer {
             color: ColorMode::Never,
-            variables: Some(&variables),
+            include_keys: false,
             ..Default::default()
         };
 
         let actual = printer.print(&env).unwrap();
-        assert_eq!(actual, Vec::from("foo\n"));
+        assert_eq!(actual, Vec::from("foo\nbar\n"));
     }
 
     #[test]
@@ -175,5 +162,17 @@ mod tests {
                 "\n"
             ))
         );
+    }
+
+    #[test]
+    fn json_mode() {
+        let env = Env::from(Vec::from("VAR1=foo\0VAR2=bar\0"));
+        let printer = Printer {
+            json: true,
+            ..Default::default()
+        };
+        let actual = printer.print(&env).unwrap();
+
+        assert_eq!(actual, Vec::from(r#"{"VAR1":"foo","VAR2":"bar"}"#));
     }
 }

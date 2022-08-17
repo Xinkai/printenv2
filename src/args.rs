@@ -60,6 +60,10 @@ pub struct Args {
     #[clap(long, parse(from_os_str), required = false)]
     pub load: Option<PathBuf>,
 
+    /// Output in JSON format
+    #[clap(long)]
+    pub json: bool,
+
     /// Specified variable name(s)
     #[clap(required = false)]
     pub variables: Vec<String>,
@@ -97,6 +101,7 @@ pub fn parse() -> Args {
             || (args.color == Some(ColorMode::Always) || args.escape == Some(EscapeMode::Yes))
             || !args.variables.is_empty()
             || args.key_order.is_some()
+            || args.json
         {
             let mut cmd = Args::command();
             cmd.error(
@@ -124,6 +129,35 @@ pub fn parse() -> Args {
             "--null and --load cannot be used together",
         )
         .exit();
+    }
+
+    if args.json {
+        if args.null {
+            let mut cmd = Args::command();
+            cmd.error(
+                ErrorKind::ArgumentConflict,
+                "--null and --json cannot be used together",
+            )
+            .exit();
+        }
+
+        if args.load.is_some() {
+            let mut cmd = Args::command();
+            cmd.error(
+                ErrorKind::ArgumentConflict,
+                "--load and --json cannot be used together",
+            )
+            .exit();
+        }
+
+        if args.color == Some(ColorMode::Always) || args.escape == Some(EscapeMode::Yes) {
+            let mut cmd = Args::command();
+            cmd.error(
+                ErrorKind::ArgumentConflict,
+                "JSON mode cannot be used together with rich format output, such as color mode or escape mode",
+            )
+            .exit();
+        }
     }
 
     args

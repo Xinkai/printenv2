@@ -2,6 +2,8 @@
 pub enum AppError {
     Utf8Error(std::str::Utf8Error),
     StdIo(std::io::Error),
+    SerdeJson(serde_json::Error),
+
     #[cfg(windows)]
     WindowsCore(windows::core::Error),
     #[cfg(windows)]
@@ -37,6 +39,12 @@ impl From<std::string::FromUtf16Error> for AppError {
 impl From<std::io::Error> for AppError {
     fn from(err: std::io::Error) -> Self {
         Self::StdIo(err)
+    }
+}
+
+impl From<serde_json::Error> for AppError {
+    fn from(err: serde_json::Error) -> Self {
+        Self::SerdeJson(err)
     }
 }
 
