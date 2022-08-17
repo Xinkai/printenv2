@@ -11,6 +11,7 @@ Advantages over classic implementations
   * Escape mode: 
     * Single-line: escape line break characters
     * Unprintable characters
+  * JSON mode
 * Remote mode. See notes
 * Cross-platform
 
@@ -42,10 +43,6 @@ Platform-specifics:
 | Other       | Unsupported.                     | Unsupported.                                                                                                                                                                                         |
 
 [^1]: Be careful. These methods use a debugger or undocumented APIs.
-
-TODO
-----
-- [ ] Json output
 
 License
 -------

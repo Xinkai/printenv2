@@ -1,5 +1,7 @@
 use crate::args::KeyOrder;
 use crate::platform_ext;
+use serde::ser::SerializeMap;
+use serde::{Serialize, Serializer};
 use std::cmp::Ordering;
 use std::slice::Iter;
 
@@ -24,12 +26,32 @@ impl Ord for RecordPair {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Env(pub Vec<RecordPair>);
+
+impl Serialize for Env {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut map = serializer.serialize_map(Some(self.0.len()))?;
+        for RecordPair(ref k, ref v) in &self.0 {
+            let key = platform_ext::u8_vec_to_string(k).unwrap_or_else(|this| this);
+            let val = platform_ext::u8_vec_to_string(v).unwrap_or_else(|this| this);
+            map.serialize_entry(&key, &val)?;
+        }
+        map.end()
+    }
+}
 
 impl Env {
     pub fn iter(&self) -> Iter<'_, RecordPair> {
         self.0.iter()
+    }
+
+    pub fn filter_keys(&mut self, keys: &[String]) {
+        self.0
+            .retain(|item| keys.iter().any(|key| key.as_bytes() == item.0));
     }
 
     pub fn sort_by_key(&mut self, key_order: KeyOrder) {
@@ -167,5 +189,14 @@ mod test {
             let actual = printer.print(&env).unwrap();
             assert_eq!(actual, Vec::from("C=333\0B=222\0A=111\0"));
         }
+    }
+
+    #[test]
+    fn retain() {
+        let mut env = Env::from(Vec::from("A=111\0C=333\0B=222\0"));
+        let keys = vec!["C".to_owned()];
+        env.filter_keys(&keys);
+        assert_eq!(env.0.len(), 1);
+        assert_eq!(env.0[0], RecordPair(Vec::from("C"), Vec::from("333")));
     }
 }

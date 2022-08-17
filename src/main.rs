@@ -63,6 +63,10 @@ fn main() -> AppResult<()> {
             _ => unreachable!(),
         };
 
+        if !args.variables.is_empty() {
+            env.filter_keys(&args.variables);
+        }
+
         if let Some(key_order) = args.key_order {
             env.sort_by_key(key_order);
         }
@@ -76,8 +80,12 @@ fn main() -> AppResult<()> {
         printer.null = args.null;
     }
 
+    if args.json {
+        printer.json = args.json;
+    }
+
     if !args.variables.is_empty() {
-        printer.variables = Some(&args.variables);
+        printer.include_keys = false;
     }
 
     if let Some(color) = args.color {

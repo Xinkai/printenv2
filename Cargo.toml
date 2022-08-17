@@ -1,6 +1,6 @@
 [package]
 name = "printenv2"
-version = "0.0.4"
+version = "0.1.0"
 edition = "2021"
 authors = [
     "Xinkai Chen <xinkai.chen@qq.com>",
@@ -18,6 +18,8 @@ build = "build.rs"
 [dependencies]
 colored = { version = "2" }
 clap = { version = "3.2.16", features = ["derive"] }
+serde = { version = "1.0.142" }
+serde_json = { version = "1.0.83" }
 
 [target.'cfg(target_family = "windows")'.dependencies]
 windows = { version = "0.38", features = [
