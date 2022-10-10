@@ -141,15 +141,6 @@ pub fn parse() -> Args {
             .exit();
         }
 
-        if args.load.is_some() {
-            let mut cmd = Args::command();
-            cmd.error(
-                ErrorKind::ArgumentConflict,
-                "--load and --json cannot be used together",
-            )
-            .exit();
-        }
-
         if args.color == Some(ColorMode::Always) || args.escape == Some(EscapeMode::Yes) {
             let mut cmd = Args::command();
             cmd.error(
