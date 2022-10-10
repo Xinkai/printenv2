@@ -112,7 +112,7 @@ fn parse_record_pair(record: &[u8]) -> Option<RecordPair> {
     record
         .iter()
         .position(|c| b'=' == *c)
-        .map(|i| RecordPair((&record[..i]).to_vec(), (&record[i + 1..]).to_vec()))
+        .map(|i| RecordPair(record[..i].to_vec(), record[i + 1..].to_vec()))
 }
 
 impl From<Vec<u8>> for Env {
