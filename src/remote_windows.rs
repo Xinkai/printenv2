@@ -3,7 +3,8 @@
 // Ideas taken from https://stackoverflow.com/questions/1202653/check-for-environment-variable-in-another-process#answer-63222041
 
 use super::definition::AppResult;
-use std::ffi::c_void;
+use std::ffi::{c_void, CString};
+use windows::core::PCSTR;
 use windows::Win32::Foundation::UNICODE_STRING;
 use windows::Win32::Security::{
     LUID_AND_ATTRIBUTES, TOKEN_ADJUST_PRIVILEGES, TOKEN_PRIVILEGES, TOKEN_QUERY,
@@ -69,6 +70,8 @@ mod oxidation {
     use std::ffi::c_void;
     use std::ptr::null_mut;
     use std::rc::Rc;
+    use windows::core::PCSTR;
+    use windows::s;
     use windows::Win32::Foundation::{CloseHandle, FARPROC, HANDLE, LUID, NTSTATUS};
     use windows::Win32::Security::{
         AdjustTokenPrivileges, LookupPrivilegeValueA, TOKEN_ACCESS_MASK, TOKEN_PRIVILEGES,
@@ -148,7 +151,7 @@ mod oxidation {
         result.map(std::convert::Into::into)
     }
 
-    pub fn lookup_privilege_value(name: &str) -> ::windows::core::Result<LUID> {
+    pub fn lookup_privilege_value(name: PCSTR) -> ::windows::core::Result<LUID> {
         let system_name = None;
 
         let mut luid: LUID = LUID::default();
@@ -173,10 +176,10 @@ mod oxidation {
             AdjustTokenPrivileges(
                 token_handle.into(),
                 disable_all_privileges,
-                &new_state,
+                Some(&new_state),
                 buffer_length,
-                previous_state,
-                &mut return_length,
+                Option::from(previous_state),
+                Some(&mut return_length),
             )
         };
         if result.as_bool() {
@@ -204,9 +207,9 @@ mod oxidation {
 
         static mut FARPROC_STATIC: FARPROC = None;
         if FARPROC_STATIC.is_none() {
-            let ntdll_handle = GetModuleHandleA("ntdll.dll")?;
+            let ntdll_handle = GetModuleHandleA(s!("ntdll.dll"))?;
             FARPROC_STATIC.replace(
-                GetProcAddress(ntdll_handle, "NtQueryInformationProcess")
+                GetProcAddress(ntdll_handle, s!("NtQueryInformationProcess"))
                     .expect("NtQueryInformationProcess unavailable"),
             );
         }
@@ -254,7 +257,7 @@ mod oxidation {
                 base_addr,
                 buffer,
                 nsize,
-                &mut number_of_bytes_read,
+                Some(&mut number_of_bytes_read),
             )
         };
 
@@ -272,7 +275,9 @@ pub fn get_environment_string(pid: u32) -> AppResult<Vec<u8>> {
 
     let token_handle =
         oxidation::open_process_token(current_process, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY)?;
-    let luid = oxidation::lookup_privilege_value(SE_DEBUG_NAME)?;
+    let debug_name_cstr = CString::new(SE_DEBUG_NAME)?;
+    let debug_name = PCSTR::from_raw(debug_name_cstr.as_bytes().as_ptr());
+    let luid = oxidation::lookup_privilege_value(debug_name)?;
 
     let token_privileges = TOKEN_PRIVILEGES {
         PrivilegeCount: 1,

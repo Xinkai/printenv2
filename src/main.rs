@@ -3,6 +3,7 @@
 #![deny(clippy::pedantic)]
 #![deny(clippy::nursery)]
 #![deny(clippy::cargo)]
+#![allow(clippy::multiple_crate_versions)]
 
 use std::ffi::OsString;
 use std::fs::File;

@@ -19,13 +19,13 @@ mod oxidation {
         // Get max process args size.
         let mut mib = [CTL_KERN, KERN_ARGMAX];
         let mut maxarg: i32 = 0;
-        let mut size: u64 = size_of::<i32>().try_into()?;
+        let mut size: usize = size_of::<i32>();
         let ret = unsafe {
             sysctl(
                 mib.as_mut_ptr().cast::<i32>(),
                 2,
                 std::ptr::addr_of_mut!(maxarg).cast::<std::ffi::c_void>(),
-                &mut size,
+                std::ptr::addr_of_mut!(size),
                 null_mut(),
                 0,
             )
@@ -39,7 +39,7 @@ mod oxidation {
 
     pub fn procargs2(pid: u32, buffer: &mut Vec<u8>) -> AppResult<()> {
         let mut mib = [CTL_KERN, KERN_PROCARGS2, pid];
-        let mut size: u64 = buffer.capacity().try_into()?;
+        let mut size: usize = buffer.capacity();
         let err = unsafe {
             sysctl(
                 mib.as_mut_ptr().cast::<i32>(),

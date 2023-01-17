@@ -10,16 +10,18 @@ pub fn os_string_to_u8_vec(os_string: &OsString) -> Vec<u8> {
 
 #[cfg(target_family = "unix")]
 pub fn u8_vec_to_string(bytes: &[u8]) -> Utf8DecodeResult {
-    match std::str::from_utf8(bytes) {
-        Ok(str) => Ok(str.to_owned()),
-        Err(_) => Err(bytes
-            .iter()
-            .map(|c| {
-                let escaped = std::ascii::escape_default(*c).collect::<Vec<_>>();
-                String::from_utf8(escaped).unwrap()
-            })
-            .collect()),
-    }
+    std::str::from_utf8(bytes).map_or_else(
+        |_| {
+            Err(bytes
+                .iter()
+                .map(|c| {
+                    let escaped = std::ascii::escape_default(*c).collect::<Vec<_>>();
+                    String::from_utf8(escaped).unwrap()
+                })
+                .collect())
+        },
+        |str| Ok(str.to_owned()),
+    )
 }
 
 #[cfg(target_family = "windows")]
