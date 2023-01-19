@@ -1,27 +1,27 @@
-use clap::{ArgEnum, CommandFactory, ErrorKind, Parser};
+use clap::{error::ErrorKind, CommandFactory, Parser, ValueEnum};
 use std::path::PathBuf;
 
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ArgEnum, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
 pub enum ColorMode {
     Never,
     Auto,
     Always,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ArgEnum, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
 pub enum EscapeMode {
     No,
     Yes,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ArgEnum, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
 pub enum KeyOrder {
     Asc,
     Desc,
 }
 
 #[cfg(debugger_helper)]
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ArgEnum, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
 pub enum DebuggerHelper {
     Gdb,
 }
@@ -40,24 +40,24 @@ pub struct Args {
     pub pid: Option<u32>,
 
     #[cfg(debugger_helper)]
-    #[clap(long, arg_enum, required = false)]
+    #[clap(long, value_enum, required = false)]
     /// Dumps a debugging script for inspecting the in-present environment variables of another process.
     pub debugger_helper: Option<DebuggerHelper>,
 
     /// Controls colorfulness of output
-    #[clap(long, arg_enum, required = false)]
+    #[clap(long, value_enum, required = false)]
     pub color: Option<ColorMode>,
 
     /// Display outputs in alphabetical order of names of environment variables
-    #[clap(long, arg_enum, required = false)]
+    #[clap(long, value_enum, required = false)]
     pub key_order: Option<KeyOrder>,
 
     /// Escape control characters, for example line breaks
-    #[clap(long, arg_enum, required = false)]
+    #[clap(long, value_enum, required = false)]
     pub escape: Option<EscapeMode>,
 
     /// Load environment variables from a file. It expects the same format as /proc/<fd>/environ file on Linux.
-    #[clap(long, parse(from_os_str), required = false)]
+    #[clap(long, value_parser = clap::value_parser!(PathBuf), required = false)]
     pub load: Option<PathBuf>,
 
     /// Output in JSON format

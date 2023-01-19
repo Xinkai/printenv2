@@ -10,7 +10,7 @@ fn bindgen_generate(header: &str) -> Result<bindgen::Bindings, bindgen::BindgenE
         .parse_callbacks(Box::new(bindgen::CargoCallbacks));
 
     if let Ok(target) = target {
-        result = result.clang_arg(format!("--target={}", target));
+        result = result.clang_arg(format!("--target={target}"));
     }
     result.generate()
 }

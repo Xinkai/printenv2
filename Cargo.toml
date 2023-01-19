@@ -17,13 +17,12 @@ build = "build.rs"
 
 [dependencies]
 colored = { version = "2" }
-clap = { version = "3.2.16", features = ["derive"] }
-serde = { version = "1.0.142" }
-serde_json = { version = "1.0.83" }
+clap = { version = "4.1.1", features = ["derive"] }
+serde = { version = "1.0.152" }
+serde_json = { version = "1.0.91" }
 
 [target.'cfg(target_family = "windows")'.dependencies]
-windows = { version = "0.38", features = [
-    "alloc",
+windows = { version = "0.42.0", features = [
     "Win32_System_Threading",
     "Win32_Foundation",
     "Win32_Security",
@@ -34,7 +33,7 @@ windows = { version = "0.38", features = [
 ] }
 
 [build-dependencies]
-bindgen = { version = "0.60.1" }
+bindgen = { version = "0.63.0" }
 
 [profile.release]
 opt-level = 3
