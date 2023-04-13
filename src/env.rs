@@ -63,6 +63,7 @@ impl Env {
             KeyOrder::Desc => {
                 self.0.sort_by(|a, b| b.cmp(a));
             }
+            KeyOrder::None => (),
         }
     }
 }

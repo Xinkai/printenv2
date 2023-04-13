@@ -16,6 +16,7 @@ pub enum EscapeMode {
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
 pub enum KeyOrder {
+    None,
     Asc,
     Desc,
 }
@@ -30,33 +31,35 @@ pub enum DebuggerHelper {
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 pub struct Args {
-    /// Separate each output with NUL, not newline
+    /// Use NUL as delimiter instead of newline
     #[clap(short = '0', long)]
     pub null: bool,
 
-    /// Use environment variables of another running process.
+    /// Read environment variables of another running process
     #[cfg(remote_env)]
     #[clap(long, required = false)]
     pub pid: Option<u32>,
 
     #[cfg(debugger_helper)]
     #[clap(long, value_enum, required = false)]
-    /// Dumps a debugging script for inspecting the in-present environment variables of another process.
+    /// Print out a script to invoke a debugger for inspecting the in-present environment variables of another process
     pub debugger_helper: Option<DebuggerHelper>,
 
-    /// Controls colorfulness of output
+    /// Control colorfulness of output
     #[clap(long, value_enum, required = false)]
-    pub color: Option<ColorMode>,
+    #[arg(default_value_t = ColorMode::Auto)]
+    pub color: ColorMode,
 
     /// Display outputs in alphabetical order of names of environment variables
     #[clap(long, value_enum, required = false)]
-    pub key_order: Option<KeyOrder>,
+    #[arg(default_value_t = KeyOrder::None)]
+    pub key_order: KeyOrder,
 
-    /// Escape control characters, for example line breaks
+    /// Escape control characters, for example line breaks [default: yes unless --null or --json is used]
     #[clap(long, value_enum, required = false)]
     pub escape: Option<EscapeMode>,
 
-    /// Load environment variables from a file. It expects the same format as /proc/<fd>/environ file on Linux.
+    /// Load environment variables from a file. The file should be in the same format as the output format of --null
     #[clap(long, value_parser = clap::value_parser!(PathBuf), required = false)]
     pub load: Option<PathBuf>,
 
@@ -64,7 +67,7 @@ pub struct Args {
     #[clap(long)]
     pub json: bool,
 
-    /// Specified variable name(s)
+    /// Filter by environment variable names, also omit key names
     #[clap(required = false)]
     pub variables: Vec<String>,
 }
@@ -72,35 +75,32 @@ pub struct Args {
 pub fn parse() -> Args {
     let args = Args::parse();
 
-    if args.color == Some(ColorMode::Never) {
+    if args.color == ColorMode::Never {
         colored::control::set_override(false);
     }
 
-    if args.null && (args.color == Some(ColorMode::Always) || args.escape == Some(EscapeMode::Yes))
-    {
+    if args.null && (args.color == ColorMode::Always || args.escape == Some(EscapeMode::Yes)) {
         let mut cmd = Args::command();
         cmd.error(
             ErrorKind::ArgumentConflict,
-            "Null mode cannot be used together with rich format output, such as color mode or escape mode",
-        ).exit();
-    }
-
-    if !args.variables.is_empty() && args.key_order.is_some() {
-        let mut cmd = Args::command();
-        cmd.error(
-            ErrorKind::ArgumentConflict,
-            "Providing VARIABLES does not work with key-order mode",
+            "Null mode cannot be used together with other rich-format switches",
         )
         .exit();
+    }
+
+    if !args.variables.is_empty() && args.key_order != KeyOrder::None {
+        let mut cmd = Args::command();
+        cmd.error(ErrorKind::ArgumentConflict, "VARIABLES cannot be sorted")
+            .exit();
     }
 
     #[cfg(debugger_helper)]
     #[allow(clippy::collapsible_if)]
     if args.debugger_helper.is_some() {
         if args.null
-            || (args.color == Some(ColorMode::Always) || args.escape == Some(EscapeMode::Yes))
+            || (args.color == ColorMode::Always || args.escape.is_some())
             || !args.variables.is_empty()
-            || args.key_order.is_some()
+            || args.key_order != KeyOrder::None
             || args.json
         {
             let mut cmd = Args::command();
@@ -141,11 +141,11 @@ pub fn parse() -> Args {
             .exit();
         }
 
-        if args.color == Some(ColorMode::Always) || args.escape == Some(EscapeMode::Yes) {
+        if args.color == ColorMode::Always || args.escape == Some(EscapeMode::Yes) {
             let mut cmd = Args::command();
             cmd.error(
                 ErrorKind::ArgumentConflict,
-                "JSON mode cannot be used together with rich format output, such as color mode or escape mode",
+                "JSON mode cannot be used together with other rich-format switches",
             )
             .exit();
         }
