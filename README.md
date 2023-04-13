@@ -8,7 +8,7 @@ Advantages over classic implementations
 * Rich-format output
   * Colored mode
   * Sort mode: output can be sorted by environment variable names
-  * Escape mode: 
+  * Escape mode:
     * Single-line: escape line break characters
     * Unprintable characters
   * JSON mode
@@ -24,11 +24,11 @@ Installation
 Notes on Remote Mode
 --------------------
 
-`printenv2` comes with the ability to read environment variables of another running process.
+`printenv2` can read environment variables of another running process.
 
-Basic usage: 
+Basic usage:
 ```sh
-# Make sure you have privilege to inspect the target process.
+# Make sure you have the privilege to inspect the target process.
 printenv2 --pid 1000
 ```
 
@@ -42,7 +42,7 @@ Platform-specifics:
 | macOS       | `printenv2 --pid <PID>`          | Unsupported.                                                                                                                                                                                         |
 | Other       | Unsupported.                     | Unsupported.                                                                                                                                                                                         |
 
-[^1]: Be careful. These methods use a debugger or undocumented APIs.
+[^1]: Be careful. These methods either requires the process to be suspended for memory access; or they use undocumented APIs which may not work in the future.
 
 License
 -------

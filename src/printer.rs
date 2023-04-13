@@ -19,7 +19,7 @@ impl Default for Printer {
             null: false,
             json: false,
             color: ColorMode::Auto,
-            escape: EscapeMode::No,
+            escape: EscapeMode::Yes,
             include_keys: true,
         }
     }

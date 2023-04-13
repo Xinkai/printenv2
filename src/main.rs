@@ -68,9 +68,7 @@ fn main() -> AppResult<()> {
             env.filter_keys(&args.variables);
         }
 
-        if let Some(key_order) = args.key_order {
-            env.sort_by_key(key_order);
-        }
+        env.sort_by_key(args.key_order);
         env
     };
 
@@ -89,9 +87,7 @@ fn main() -> AppResult<()> {
         printer.include_keys = false;
     }
 
-    if let Some(color) = args.color {
-        printer.color = color;
-    }
+    printer.color = args.color;
     if let Some(escape) = args.escape {
         printer.escape = escape;
     }
