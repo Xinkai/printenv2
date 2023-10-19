@@ -1,5 +1,5 @@
 pub fn get_gdb_helper() -> String {
-    r##"#!/bin/sh
+    r#"#!/bin/sh
 
 set -eu
 
@@ -22,6 +22,6 @@ EOF
 
 cat "$OUTPUT"
 rm "$OUTPUT"
-"##
+"#
     .to_string()
 }
