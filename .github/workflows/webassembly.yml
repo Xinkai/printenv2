@@ -20,6 +20,7 @@ jobs:
     - name: Cargo component
       run: |
         rustup target add wasm32-wasi
+        curl https://wasmtime.dev/install.sh -sSf | bash
         cargo install cargo-component
     - name: Check
       run: |
