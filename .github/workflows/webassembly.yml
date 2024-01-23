@@ -19,6 +19,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Cargo component
       run: |
+        rustup target add wasm32-wasi
         cargo install cargo-component
     - name: Check
       run: |
