@@ -75,7 +75,7 @@ pub struct Args {
 pub fn parse() -> Args {
     let args = Args::parse();
 
-    if args.color == ColorMode::Never {
+    if args.color == ColorMode::Never || (args.null && args.color == ColorMode::Auto) {
         colored::control::set_override(false);
     }
 
