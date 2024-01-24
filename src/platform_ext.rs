@@ -8,7 +8,13 @@ pub fn os_string_to_u8_vec(os_string: &OsString) -> Vec<u8> {
     os_string.as_bytes().to_vec()
 }
 
-#[cfg(target_family = "unix")]
+#[cfg(target_os = "wasi")]
+pub fn os_string_to_u8_vec(os_string: &OsString) -> Vec<u8> {
+    use std::os::wasi::ffi::OsStrExt;
+    os_string.as_bytes().to_vec()
+}
+
+#[cfg(any(target_family = "unix", target_os = "wasi"))]
 pub fn u8_vec_to_string(bytes: &[u8]) -> Utf8DecodeResult {
     std::str::from_utf8(bytes).map_or_else(
         |_| {
@@ -49,7 +55,7 @@ mod test {
     }
 
     #[test]
-    #[cfg(target_family = "unix")]
+    #[cfg(any(target_family = "unix", target_os = "wasi"))]
     fn unix_decode_non_utf8() {
         let bytes = vec![0x54, 0x65, 0x73, 0x74, 0xc3, 0x28];
         let formatted = u8_vec_to_string(&bytes);

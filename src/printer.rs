@@ -139,7 +139,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(target_family = "unix")]
+    #[cfg(any(target_family = "unix", target_os = "wasi"))]
     fn invalid_utf8() {
         use colored::Colorize;
 
