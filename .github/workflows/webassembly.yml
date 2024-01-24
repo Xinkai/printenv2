@@ -16,11 +16,9 @@ jobs:
         os: [ubuntu-latest]
     runs-on:  ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: bytecodealliance/actions/wasmtime/setup@v1
     - name: Cargo component
       run: |
-        rustup target add wasm32-wasi
-        curl https://wasmtime.dev/install.sh -sSf | bash
         cargo install cargo-component
     - name: Check
       run: |
