@@ -20,11 +20,11 @@ jobs:
     - uses: bytecodealliance/actions/wasmtime/setup@v1
     - name: Cargo component
       run: |
-        rustup target add wasm32-wasi
+        rustup target add wasm32-wasip1
         cargo install cargo-component
     - name: Check
       run: |
-        cargo clippy --target wasm32-wasi --all-targets --all-features -- --deny warnings --deny clippy::all --deny clippy::pedantic --deny clippy::nursery --deny clippy::cargo
+        cargo clippy --target wasm32-wasip1 --all-targets --all-features -- --deny warnings --deny clippy::all --deny clippy::pedantic --deny clippy::nursery --deny clippy::cargo
         cargo fmt --check
     - name: Build
       run: cargo component build --verbose
