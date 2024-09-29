@@ -16,6 +16,11 @@ fn bindgen_generate(header: &str) -> Result<bindgen::Bindings, bindgen::BindgenE
 }
 
 fn main() {
+    println!("cargo::rustc-check-cfg=cfg(unix_apple_sysctl)");
+    println!("cargo::rustc-check-cfg=cfg(debugger_helper)");
+    println!("cargo::rustc-check-cfg=cfg(remote_env)");
+    println!("cargo::rustc-check-cfg=cfg(unix_kvm)");
+
     let unix = env::var("CARGO_CFG_UNIX");
     let os = env::var("CARGO_CFG_TARGET_OS");
 
