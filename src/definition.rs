@@ -1,4 +1,5 @@
 #[derive(Debug)]
+#[allow(dead_code)]
 pub enum AppError {
     Utf8Error(std::str::Utf8Error),
     StdIo(std::io::Error),
