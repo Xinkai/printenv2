@@ -67,11 +67,11 @@ impl Default for RTL_USER_PROCESS_PARAMETERS {
 }
 
 mod oxidation {
-    use std::cell::LazyCell;
     use std::ffi::c_void;
     use std::ptr::null_mut;
     use std::rc::Rc;
-    use windows::Win32::Foundation::{CloseHandle, HANDLE, LUID, NTSTATUS};
+    use std::sync::LazyLock;
+    use windows::Win32::Foundation::{CloseHandle, FARPROC, HANDLE, LUID, NTSTATUS};
     use windows::Win32::Security::{
         AdjustTokenPrivileges, LookupPrivilegeValueA, TOKEN_ACCESS_MASK, TOKEN_PRIVILEGES,
     };
@@ -206,13 +206,17 @@ mod oxidation {
             returnlength: *mut u32,
         ) -> NTSTATUS;
 
-        let proc: LazyCell<NtQueryInformationProcess> = LazyCell::new(|| {
-            let ntdll_handle = GetModuleHandleA(s!("ntdll.dll")).expect("Open ntdll.dll");
-            let addr = GetProcAddress(ntdll_handle, s!("NtQueryInformationProcess"))
-                .expect("NtQueryInformationProcess unavailable");
-            ::core::mem::transmute(addr)
+        static FARPROC_STATIC: LazyLock<FARPROC> = LazyLock::new(|| unsafe {
+            let ntdll_handle = GetModuleHandleA(s!("ntdll.dll")).expect("");
+
+            FARPROC::from(
+                GetProcAddress(ntdll_handle, s!("NtQueryInformationProcess"))
+                    .expect("NtQueryInformationProcess unavailable"),
+            )
         });
 
+        let proc: NtQueryInformationProcess =
+            unsafe { ::core::mem::transmute(FARPROC_STATIC.unwrap()) };
         proc(
             processhandle,
             processinformationclass,
