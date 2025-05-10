@@ -10,8 +10,8 @@ mod apple_sysctl_bindings {
     include!(concat!(env!("OUT_DIR"), "/apple-sysctl-bindings.rs"));
 }
 mod oxidation {
-    use super::apple_sysctl_bindings::{sysctl, CTL_KERN, KERN_ARGMAX, KERN_PROCARGS2};
-    use super::{size_of, AppResult};
+    use super::apple_sysctl_bindings::{CTL_KERN, KERN_ARGMAX, KERN_PROCARGS2, sysctl};
+    use super::{AppResult, size_of};
 
     use std::ptr::null_mut;
 

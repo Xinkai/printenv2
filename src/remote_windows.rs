@@ -3,8 +3,7 @@
 // Ideas taken from https://stackoverflow.com/questions/1202653/check-for-environment-variable-in-another-process#answer-63222041
 
 use super::definition::AppResult;
-use std::ffi::{c_void, CString};
-use windows::core::PCSTR;
+use std::ffi::{CString, c_void};
 use windows::Win32::Foundation::UNICODE_STRING;
 use windows::Win32::Security::{
     LUID_AND_ATTRIBUTES, TOKEN_ADJUST_PRIVILEGES, TOKEN_PRIVILEGES, TOKEN_QUERY,
@@ -12,9 +11,10 @@ use windows::Win32::Security::{
 use windows::Win32::System::Kernel::STRING;
 use windows::Win32::System::SystemServices::SE_DEBUG_NAME;
 use windows::Win32::System::Threading::{
-    ProcessBasicInformation, PEB, PROCESS_BASIC_INFORMATION, PROCESS_INFORMATION,
-    PROCESS_QUERY_INFORMATION, PROCESS_VM_READ,
+    PEB, PROCESS_BASIC_INFORMATION, PROCESS_INFORMATION, PROCESS_QUERY_INFORMATION,
+    PROCESS_VM_READ, ProcessBasicInformation,
 };
+use windows::core::PCSTR;
 
 #[repr(C)]
 #[derive(Debug)]
@@ -67,21 +67,21 @@ impl Default for RTL_USER_PROCESS_PARAMETERS {
 }
 
 mod oxidation {
-    use std::cell::LazyCell;
     use std::ffi::c_void;
     use std::ptr::null_mut;
     use std::rc::Rc;
-    use windows::core::PCSTR;
-    use windows::s;
-    use windows::Win32::Foundation::{CloseHandle, HANDLE, LUID, NTSTATUS};
+    use std::sync::LazyLock;
+    use windows::Win32::Foundation::{CloseHandle, FARPROC, HANDLE, LUID, NTSTATUS};
     use windows::Win32::Security::{
         AdjustTokenPrivileges, LookupPrivilegeValueA, TOKEN_ACCESS_MASK, TOKEN_PRIVILEGES,
     };
     use windows::Win32::System::Diagnostics::Debug::ReadProcessMemory;
     use windows::Win32::System::LibraryLoader::{GetModuleHandleA, GetProcAddress};
     use windows::Win32::System::Threading::{
-        OpenProcess, PROCESSINFOCLASS, PROCESS_ACCESS_RIGHTS, PROCESS_INFORMATION,
+        OpenProcess, PROCESS_ACCESS_RIGHTS, PROCESS_INFORMATION, PROCESSINFOCLASS,
     };
+    use windows::core::PCSTR;
+    use windows::s;
 
     #[derive(Debug)]
     pub struct MyOwnedHandle {
@@ -206,13 +206,17 @@ mod oxidation {
             returnlength: *mut u32,
         ) -> NTSTATUS;
 
-        let proc: LazyCell<NtQueryInformationProcess> = LazyCell::new(|| {
-            let ntdll_handle = GetModuleHandleA(s!("ntdll.dll")).expect("Open ntdll.dll");
-            let addr = GetProcAddress(ntdll_handle, s!("NtQueryInformationProcess"))
-                .expect("NtQueryInformationProcess unavailable");
-            ::core::mem::transmute(addr)
+        static FARPROC_STATIC: LazyLock<FARPROC> = LazyLock::new(|| unsafe {
+            let ntdll_handle = GetModuleHandleA(s!("ntdll.dll")).expect("");
+
+            FARPROC::from(
+                GetProcAddress(ntdll_handle, s!("NtQueryInformationProcess"))
+                    .expect("NtQueryInformationProcess unavailable"),
+            )
         });
 
+        let proc: NtQueryInformationProcess =
+            unsafe { ::core::mem::transmute(FARPROC_STATIC.unwrap()) };
         proc(
             processhandle,
             processinformationclass,
