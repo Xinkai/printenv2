@@ -1,7 +1,7 @@
+use crate::AppResult;
 use crate::args::{ColorMode, EscapeMode};
 use crate::env::Env;
 use crate::platform_ext::u8_vec_to_string;
-use crate::AppResult;
 use colored::{ColoredString, Colorize};
 use std::io::Write;
 

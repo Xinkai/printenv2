@@ -1,7 +1,7 @@
 [package]
 name = "printenv2"
 version = "0.1.3"
-edition = "2021"
+edition = "2024"
 authors = [
     "Xinkai Chen <xinkai.chen@qq.com>",
 ]

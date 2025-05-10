@@ -35,7 +35,7 @@ impl Serialize for Env {
         S: Serializer,
     {
         let mut map = serializer.serialize_map(Some(self.0.len()))?;
-        for RecordPair(ref k, ref v) in &self.0 {
+        for RecordPair(k, v) in &self.0 {
             let key = platform_ext::u8_vec_to_string(k).unwrap_or_else(|this| this);
             let val = platform_ext::u8_vec_to_string(v).unwrap_or_else(|this| this);
             map.serialize_entry(&key, &val)?;
@@ -145,8 +145,8 @@ impl Env {
 #[cfg(test)]
 mod test {
     use super::{Env, RecordPair};
-    use crate::args::{ColorMode, KeyOrder};
     use crate::Printer;
+    use crate::args::{ColorMode, KeyOrder};
 
     #[test]
     fn parse_records_by_env_string() {

@@ -10,11 +10,11 @@ mod kvm_bindings {
 }
 
 mod oxidation {
-    use super::kvm_bindings::{
-        kinfo_proc, kvm_close, kvm_getenvv, kvm_geterr, kvm_getprocs, kvm_openfiles, kvm_t,
-        KERN_PROC_PID, O_RDONLY, _POSIX2_LINE_MAX,
-    };
     use super::AppResult;
+    use super::kvm_bindings::{
+        _POSIX2_LINE_MAX, KERN_PROC_PID, O_RDONLY, kinfo_proc, kvm_close, kvm_getenvv, kvm_geterr,
+        kvm_getprocs, kvm_openfiles, kvm_t,
+    };
 
     use crate::definition::AppError;
     use std::ffi::{CStr, CString};
