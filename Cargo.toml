@@ -33,7 +33,7 @@ windows = { version = "0.42.0", features = [
 ] }
 
 [build-dependencies]
-bindgen = { version = "0.63.0" }
+bindgen = { version = "0.71.1" }
 
 [profile.release]
 opt-level = 3
