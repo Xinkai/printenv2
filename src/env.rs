@@ -1,30 +1,13 @@
-use crate::args::KeyOrder;
-use crate::platform_ext;
-use serde::ser::SerializeMap;
-use serde::{Serialize, Serializer};
-use std::cmp::Ordering;
 use std::slice::Iter;
 
-#[derive(Eq, Debug)]
+use serde::ser::SerializeMap;
+use serde::{Serialize, Serializer};
+
+use crate::args::KeyOrder;
+use crate::platform_ext;
+
+#[derive(Eq, Debug, PartialEq, PartialOrd, Ord)]
 pub struct RecordPair(pub Vec<u8>, pub Vec<u8>);
-
-impl PartialEq<Self> for RecordPair {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.eq(&other.0)
-    }
-}
-
-impl PartialOrd<Self> for RecordPair {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for RecordPair {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.0.cmp(&other.0)
-    }
-}
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Env(pub Vec<RecordPair>);
