@@ -5,7 +5,6 @@
 #![deny(clippy::cargo)]
 #![allow(clippy::multiple_crate_versions)]
 
-use std::ffi::OsString;
 use std::fs::File;
 use std::io::{Read, Stdout, Write};
 
@@ -48,7 +47,7 @@ fn main() -> AppResult<()> {
         let mut env = match (args.load, pid) {
             (Some(path), None) => {
                 let mut content = Vec::new();
-                if path == OsString::from("-") {
+                if *path == *"-" {
                     let stdin = std::io::stdin();
                     let mut reader = stdin.lock();
                     reader.read_to_end(&mut content)?;

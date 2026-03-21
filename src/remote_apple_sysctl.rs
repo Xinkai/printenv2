@@ -45,7 +45,7 @@ mod oxidation {
                 mib.as_mut_ptr().cast::<i32>(),
                 3,
                 buffer.as_mut_ptr().cast::<std::ffi::c_void>(),
-                &mut size,
+                &raw mut size,
                 null_mut(),
                 0,
             )
