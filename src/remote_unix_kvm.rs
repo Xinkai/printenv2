@@ -54,7 +54,7 @@ mod oxidation {
                     self.kd,
                     KERN_PROC_PID.try_into()?,
                     pid.try_into()?,
-                    &mut cnt,
+                    &raw mut cnt,
                 )
             };
             if proc.is_null() {
